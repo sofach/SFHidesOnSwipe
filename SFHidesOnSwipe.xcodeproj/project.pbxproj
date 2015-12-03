@@ -14,6 +14,7 @@
 		AD1EC6831BF5C87D0076BD2E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AD1EC6811BF5C87D0076BD2E /* LaunchScreen.storyboard */; };
 		AD1EC68D1BF5C8B30076BD2E /* UIView+SFHidesOnSwipe.m in Sources */ = {isa = PBXBuildFile; fileRef = AD1EC68C1BF5C8B30076BD2E /* UIView+SFHidesOnSwipe.m */; };
 		AD3739C81C1035DF009796A8 /* TestViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = AD3739C71C1035DF009796A8 /* TestViewController.m */; };
+		AD3739CA1C10425E009796A8 /* SFHidesOnSwipe.podspec in Resources */ = {isa = PBXBuildFile; fileRef = AD3739C91C10425E009796A8 /* SFHidesOnSwipe.podspec */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +30,7 @@
 		AD1EC68C1BF5C8B30076BD2E /* UIView+SFHidesOnSwipe.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+SFHidesOnSwipe.m"; sourceTree = "<group>"; };
 		AD3739C61C1035DF009796A8 /* TestViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestViewController.h; sourceTree = "<group>"; };
 		AD3739C71C1035DF009796A8 /* TestViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestViewController.m; sourceTree = "<group>"; };
+		AD3739C91C10425E009796A8 /* SFHidesOnSwipe.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SFHidesOnSwipe.podspec; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +47,7 @@
 		AD1EC6671BF5C87D0076BD2E = {
 			isa = PBXGroup;
 			children = (
+				AD3739C91C10425E009796A8 /* SFHidesOnSwipe.podspec */,
 				AD1EC6721BF5C87D0076BD2E /* SFHidesOnSwipe */,
 				AD1EC6711BF5C87D0076BD2E /* Products */,
 			);
@@ -150,6 +153,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AD1EC6831BF5C87D0076BD2E /* LaunchScreen.storyboard in Resources */,
+				AD3739CA1C10425E009796A8 /* SFHidesOnSwipe.podspec in Resources */,
 				AD1EC6801BF5C87D0076BD2E /* Assets.xcassets in Resources */,
 				AD1EC67E1BF5C87D0076BD2E /* Main.storyboard in Resources */,
 			);
