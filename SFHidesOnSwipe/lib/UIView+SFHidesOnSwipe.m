@@ -11,7 +11,7 @@
 
 @interface SFHidesOnSwipeContext : NSObject
 
-- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated;
+- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock;
 
 @end
 
@@ -23,20 +23,20 @@
 
 @implementation UIView (SFHidesOnSwipe)
 
-- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated {
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
     
     if (!self.sf_hidesOnSwipeContext) {
         self.sf_hidesOnSwipeContext = [SFHidesOnSwipeContext new];
     }
-    [self.sf_hidesOnSwipeContext setOwner:self scrollView:scrollView fromFrame:orignFrame toFrame:finalFrame animated:animated];
+    [self.sf_hidesOnSwipeContext setOwner:self scrollView:scrollView fromFrame:orignFrame toFrame:finalFrame animated:animated completion:completionBlock];
 }
 
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame {
-    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:orignFrame toFrame:finalFrame animated:YES];
+    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:orignFrame toFrame:finalFrame animated:YES completion:nil];
 }
 
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView {
-    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:self.frame toFrame:self.frame animated:YES];
+    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:self.frame toFrame:self.frame animated:YES completion:nil];
 }
 
 #pragma mark getter setter
@@ -62,6 +62,7 @@
 @property (assign, nonatomic) CGRect finalFrame;
 @property (assign, nonatomic) NSInteger direction;
 @property (assign, nonatomic) BOOL isOwnerHidden;
+@property (copy, nonatomic) void(^completion)(BOOL isOriginal, CGRect frame);
 
 //由于一个页面中可能又多个view需要加滑动隐藏效果，所以性能尤为关键，下面几个参数都是为了增加性能
 @property (assign, nonatomic) BOOL isOwnerPartAppear;
@@ -80,7 +81,7 @@
     return self;
 }
 
-- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated {
+- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
     if (_scrollView) {
         [self removeObservers];
     }
@@ -90,6 +91,7 @@
     _orignFrame = orignFrame;
     _finalFrame = finalFrame;
     _direction = fabs(finalFrame.origin.y-orignFrame.origin.y)/(finalFrame.origin.y-orignFrame.origin.y);
+    _completion = completionBlock;
     
     CGFloat duration = 0.0;
     if (animated) {
@@ -168,11 +170,18 @@
                 self.owner.frame = self.orignFrame;
             } completion:^(BOOL finished) {
                 self.isOwnerHidden = NO;
+                if (finished && self.completion) {
+                    self.completion(YES, self.orignFrame);
+                }
             }];
         } else { //这里是必须的，因为可能露出一点
             [UIView animateWithDuration:0.25 animations:^{
                 self.owner.frame = self.finalFrame;
-            } completion:nil];
+            } completion:^(BOOL finished) {
+                if (finished && self.completion) {
+                    self.completion(NO, self.finalFrame);
+                }
+            }];
         }
     } else {
         if (_panY<0) {
@@ -180,11 +189,18 @@
                 self.owner.frame = self.finalFrame;
             } completion:^(BOOL finished) {
                 self.isOwnerHidden = YES;
+                if (finished && self.completion) {
+                    self.completion(NO, self.finalFrame);
+                }
             }];
         } else {
             [UIView animateWithDuration:0.25 animations:^{
                 self.owner.frame = self.orignFrame;
-            } completion:nil];
+            } completion:^(BOOL finished) {
+                if (finished && self.completion) {
+                    self.completion(YES, self.orignFrame);
+                }
+            }];
         }
     }
     self.panY = DefaultPanY; //拖拽结束时，需要设置pany=0

@@ -54,11 +54,18 @@
     CGSize navibarSize = self.navigationController.navigationBar.frame.size;
     CGSize tabbarSize = self.tabBarController.tabBar.frame.size;
     
-    [_topView sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, 64, [UIScreen mainScreen].bounds.size.width, 44) toFrame:CGRectMake(0, -44, [UIScreen mainScreen].bounds.size.width, 44)];
+    [_topView sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, 64, [UIScreen mainScreen].bounds.size.width, 44) toFrame:CGRectMake(0, -44, [UIScreen mainScreen].bounds.size.width, 44) animated:YES completion:^(BOOL isOriginal, CGRect frame) {
+        NSLog(@"top view frame changed:%@", NSStringFromCGRect(frame));
+    }];
     
-    [self.navigationController.navigationBar sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, 20, navibarSize.width, navibarSize.height) toFrame:CGRectMake(0, -navibarSize.height-44, navibarSize.width, navibarSize.height)]; //为了在显示时遮住topview，多上移了44
+    [self.navigationController.navigationBar sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, 20, navibarSize.width, navibarSize.height) toFrame:CGRectMake(0, -navibarSize.height-44, navibarSize.width, navibarSize.height) animated:YES completion:^(BOOL isOriginal, CGRect frame) {
+        NSLog(@"navigation bar frame changed:%@", NSStringFromCGRect(frame));
+
+    }]; //为了在显示时遮住topview，多上移了44
     
-    [self.tabBarController.tabBar sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, screenSize.height-tabbarSize.height, tabbarSize.width, tabbarSize.height) toFrame:CGRectMake(0, screenSize.height, tabbarSize.width, tabbarSize.height)];
+    [self.tabBarController.tabBar sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, screenSize.height-tabbarSize.height, tabbarSize.width, tabbarSize.height) toFrame:CGRectMake(0, screenSize.height, tabbarSize.width, tabbarSize.height) animated:YES completion:^(BOOL isOriginal, CGRect frame) {
+        NSLog(@"tab bar frame changed:%@", NSStringFromCGRect(frame));
+    }];
 }
 
 - (void)didReceiveMemoryWarning {
