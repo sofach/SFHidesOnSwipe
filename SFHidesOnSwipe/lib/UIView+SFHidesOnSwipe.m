@@ -11,7 +11,7 @@
 
 @interface SFHidesOnSwipeContext : NSObject
 
-- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame;
+- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated;
 
 @end
 
@@ -23,11 +23,20 @@
 
 @implementation UIView (SFHidesOnSwipe)
 
-- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame {
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated {
+    
     if (!self.sf_hidesOnSwipeContext) {
         self.sf_hidesOnSwipeContext = [SFHidesOnSwipeContext new];
     }
-    [self.sf_hidesOnSwipeContext setOwner:self scrollView:scrollView fromFrame:orignFrame toFrame:finalFrame];
+    [self.sf_hidesOnSwipeContext setOwner:self scrollView:scrollView fromFrame:orignFrame toFrame:finalFrame animated:animated];
+}
+
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame {
+    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:orignFrame toFrame:finalFrame animated:YES];
+}
+
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView {
+    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:self.frame toFrame:self.frame animated:YES];
 }
 
 #pragma mark getter setter
@@ -71,7 +80,7 @@
     return self;
 }
 
-- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame {
+- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated {
     if (_scrollView) {
         [self removeObservers];
     }
@@ -81,7 +90,15 @@
     _orignFrame = orignFrame;
     _finalFrame = finalFrame;
     _direction = fabs(finalFrame.origin.y-orignFrame.origin.y)/(finalFrame.origin.y-orignFrame.origin.y);
-    [_owner setFrame:_orignFrame];
+    
+    CGFloat duration = 0.0;
+    if (animated) {
+        duration = .25;
+    }
+    [UIView animateWithDuration:duration animations:^{
+        [_owner setFrame:_orignFrame];
+    }];
+
     if (_scrollView) {
         [self addObservers];
     }

@@ -2,7 +2,7 @@
 Pod::Spec.new do |s|
 
 s.name         = "SFHidesOnSwipe"
-s.version      = "1.0.0"
+s.version      = "1.0.1"
 s.summary      = "add hidesOnSwipe to view"
 
 s.description  = <<-DESC
@@ -18,7 +18,7 @@ s.author       = { "sofach" => "sofach@126.com" }
 s.platform     = :ios
 s.platform     = :ios, "5.0"
 
-s.source       = { :git => "https://github.com/sofach/SFHidesOnSwipe.git", :tag => "1.0.0" }
+s.source       = { :git => "https://github.com/sofach/SFHidesOnSwipe.git", :tag => "1.0.1" }
 
 s.source_files  = "SFHidesOnSwipe/lib/**/*.{h,m}"
 s.requires_arc = true

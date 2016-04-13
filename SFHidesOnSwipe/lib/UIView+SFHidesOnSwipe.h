@@ -10,6 +10,8 @@
 
 @interface UIView (SFHidesOnSwipe)
 
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView;
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame;
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated;
 
 @end
