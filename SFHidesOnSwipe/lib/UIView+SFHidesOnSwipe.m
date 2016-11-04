@@ -11,7 +11,7 @@
 
 @interface SFHidesOnSwipeContext : NSObject
 
-- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame beginOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock;
+- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame thresholdOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock;
 
 @end
 
@@ -23,20 +23,20 @@
 
 @implementation UIView (SFHidesOnSwipe)
 
-- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame beginOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame thresholdOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
 
     if (!self.sf_hidesOnSwipeContext) {
         self.sf_hidesOnSwipeContext = [SFHidesOnSwipeContext new];
     }
-    [self.sf_hidesOnSwipeContext setOwner:self scrollView:scrollView fromFrame:orignFrame toFrame:finalFrame beginOffset:offset animated:animated completion:completionBlock];
+    [self.sf_hidesOnSwipeContext setOwner:self scrollView:scrollView fromFrame:orignFrame toFrame:finalFrame thresholdOffset:offset animated:animated completion:completionBlock];
 }
 
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame {
-    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:orignFrame toFrame:finalFrame beginOffset:self.frame.size.height/2 animated:YES completion:nil];
+    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:orignFrame toFrame:finalFrame thresholdOffset:self.frame.size.height/2 animated:YES completion:nil];
 }
 
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView {
-    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:self.frame toFrame:self.frame beginOffset:self.frame.size.height/2 animated:YES completion:nil];
+    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:self.frame toFrame:self.frame thresholdOffset:self.frame.size.height/2 animated:YES completion:nil];
 }
 
 #pragma mark getter setter
@@ -66,7 +66,7 @@ typedef enum{
 @property (assign, nonatomic) CGRect orignFrame;
 @property (assign, nonatomic) CGRect finalFrame;
 @property (assign, nonatomic) NSInteger direction;
-@property (assign, nonatomic) CGFloat beginOffset;
+@property (assign, nonatomic) CGFloat thresholdOffset;
 @property (assign, nonatomic) BOOL canSwipeHide;
 
 @property (assign, nonatomic) SFSwipeState state;
@@ -91,7 +91,7 @@ typedef enum{
     return self;
 }
 
-- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame beginOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
+- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame thresholdOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
     if (_scrollView) {
         [self removeObservers];
     }
@@ -100,7 +100,7 @@ typedef enum{
     _owner = owner;
     _orignFrame = orignFrame;
     _finalFrame = finalFrame;
-    _beginOffset = offset;
+    _thresholdOffset = offset;
     _direction = fabs(finalFrame.origin.y-orignFrame.origin.y)/(finalFrame.origin.y-orignFrame.origin.y);
     _completion = completionBlock;
     
@@ -143,7 +143,7 @@ typedef enum{
 }
 
 - (void)tableViewBeginScroll {
-    if (self.scrollView.contentOffset.y<_beginOffset) {
+    if (self.scrollView.contentOffset.y<_thresholdOffset) {
         _canSwipeHide = NO;
     } else {
         _canSwipeHide = YES;
@@ -151,9 +151,6 @@ typedef enum{
 }
 
 - (void)tableViewDidScroll {
-    if (self.scrollView.contentSize.height<self.scrollView.frame.size.height || self.scrollView.panGestureRecognizer.state != UIGestureRecognizerStateChanged) {
-        return;
-    }
     CGFloat deltaOffset = self.scrollView.contentOffset.y - self.preOffset;
     self.preOffset = self.scrollView.contentOffset.y;
 

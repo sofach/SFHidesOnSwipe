@@ -12,6 +12,6 @@
 
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView;
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame;
-- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame beginOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock;
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame thresholdOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock;
 
 @end
