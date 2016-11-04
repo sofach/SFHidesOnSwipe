@@ -11,7 +11,7 @@
 
 @interface SFHidesOnSwipeContext : NSObject
 
-- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock;
+- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame beginOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock;
 
 @end
 
@@ -23,20 +23,20 @@
 
 @implementation UIView (SFHidesOnSwipe)
 
-- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
-    
+- (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame beginOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
+
     if (!self.sf_hidesOnSwipeContext) {
         self.sf_hidesOnSwipeContext = [SFHidesOnSwipeContext new];
     }
-    [self.sf_hidesOnSwipeContext setOwner:self scrollView:scrollView fromFrame:orignFrame toFrame:finalFrame animated:animated completion:completionBlock];
+    [self.sf_hidesOnSwipeContext setOwner:self scrollView:scrollView fromFrame:orignFrame toFrame:finalFrame beginOffset:offset animated:animated completion:completionBlock];
 }
 
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame {
-    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:orignFrame toFrame:finalFrame animated:YES completion:nil];
+    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:orignFrame toFrame:finalFrame beginOffset:self.frame.size.height/2 animated:YES completion:nil];
 }
 
 - (void)sf_hidesOnSwipeScrollView:(UIScrollView *)scrollView {
-    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:self.frame toFrame:self.frame animated:YES completion:nil];
+    [self sf_hidesOnSwipeScrollView:scrollView fromFrame:self.frame toFrame:self.frame beginOffset:self.frame.size.height/2 animated:YES completion:nil];
 }
 
 #pragma mark getter setter
@@ -52,7 +52,12 @@
 
 @end
 
-#define DefaultPanY -10000
+typedef enum{
+    SFSwipeStateNormal = 0,
+    SFSwipeStateWillHide,
+    SFSwipeStateHidden,
+    SFSwipeStateWillShow
+} SFSwipeState;
 
 @interface SFHidesOnSwipeContext ()
 
@@ -61,11 +66,15 @@
 @property (assign, nonatomic) CGRect orignFrame;
 @property (assign, nonatomic) CGRect finalFrame;
 @property (assign, nonatomic) NSInteger direction;
+@property (assign, nonatomic) CGFloat beginOffset;
+@property (assign, nonatomic) BOOL canSwipeHide;
+
+@property (assign, nonatomic) SFSwipeState state;
+
 @property (assign, nonatomic) BOOL isOwnerHidden;
 @property (copy, nonatomic) void(^completion)(BOOL isOriginal, CGRect frame);
 
 //由于一个页面中可能又多个view需要加滑动隐藏效果，所以性能尤为关键，下面几个参数都是为了增加性能
-@property (assign, nonatomic) BOOL isOwnerPartAppear;
 @property (assign, nonatomic) UIGestureRecognizerState panState;
 @property (assign, nonatomic) CGFloat preOffset;
 @property (assign, nonatomic) CGFloat panY;
@@ -76,12 +85,13 @@
 
 - (instancetype)init {
     if (self = [super init]) {
-
+        _canSwipeHide = NO;
+        _state = SFSwipeStateNormal;
     }
     return self;
 }
 
-- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
+- (void)setOwner:(UIView *)owner scrollView:(UIScrollView *)scrollView fromFrame:(CGRect)orignFrame toFrame:(CGRect)finalFrame beginOffset:(CGFloat)offset animated:(BOOL)animated completion:(void(^)(BOOL isOriginal, CGRect frame))completionBlock {
     if (_scrollView) {
         [self removeObservers];
     }
@@ -90,6 +100,7 @@
     _owner = owner;
     _orignFrame = orignFrame;
     _finalFrame = finalFrame;
+    _beginOffset = offset;
     _direction = fabs(finalFrame.origin.y-orignFrame.origin.y)/(finalFrame.origin.y-orignFrame.origin.y);
     _completion = completionBlock;
     
@@ -122,37 +133,56 @@
     if (object == self.scrollView && [keyPath isEqualToString:@"contentOffset"]) {
         [self tableViewDidScroll];
     } else if (object == self.scrollView.panGestureRecognizer && [keyPath isEqualToString:@"state"]) {
-        self.panState = self.scrollView.panGestureRecognizer.state;
+
         if (self.scrollView.panGestureRecognizer.state == UIGestureRecognizerStateEnded) {
             [self tableViewDidEndDragging];
+        } else if (self.scrollView.panGestureRecognizer.state == UIGestureRecognizerStateBegan) {
+            [self tableViewBeginScroll];
         }
     }
 }
 
-- (void)tableViewDidScroll {
+- (void)tableViewBeginScroll {
+    if (self.scrollView.contentOffset.y<_beginOffset) {
+        _canSwipeHide = NO;
+    } else {
+        _canSwipeHide = YES;
+    }
+}
 
-    CGFloat deltaOffset = self.scrollView.contentOffset.y - self.preOffset;
-    self.preOffset = self.scrollView.contentOffset.y;
-    
-    //当隐藏了且继续向下滑，或者显示了继续向上滑，或者panY=0，直接返回可以增加性能
-    if ((deltaOffset>=0 && self.isOwnerHidden && self.panY == DefaultPanY) || (deltaOffset<=0 && !self.isOwnerHidden && self.panY == DefaultPanY)) {
+- (void)tableViewDidScroll {
+    if (self.scrollView.contentSize.height<self.scrollView.frame.size.height || self.scrollView.panGestureRecognizer.state != UIGestureRecognizerStateChanged) {
         return;
     }
-    if (self.panState == UIGestureRecognizerStateBegan || self.panState == UIGestureRecognizerStateChanged) {
-        _panY = [self.scrollView.panGestureRecognizer translationInView:self.scrollView].y/3;
+    CGFloat deltaOffset = self.scrollView.contentOffset.y - self.preOffset;
+    self.preOffset = self.scrollView.contentOffset.y;
 
-        if (self.isOwnerHidden && _panY>0) {
+    //当隐藏了且继续向下滑，或者显示了继续向上滑，或者panY=0，直接返回可以增加性能
+    if ((deltaOffset>=0 && self.state==SFSwipeStateHidden) || (deltaOffset<=0 && self.state==SFSwipeStateNormal)) {
+        return;
+    }
+    _panY = [self.scrollView.panGestureRecognizer translationInView:self.scrollView].y/4;
+    if (_panY>0) {
+        if (self.state==SFSwipeStateHidden || self.state==SFSwipeStateWillShow) {
+            self.state = SFSwipeStateWillShow;
             CGRect frame = self.finalFrame;
             frame.origin.y = self.finalFrame.origin.y - _panY*self.direction;
             if ((frame.origin.y-self.orignFrame.origin.y)*(frame.origin.y-self.finalFrame.origin.y)>0) {
                 frame.origin.y = self.orignFrame.origin.y;
+                self.state = SFSwipeStateNormal;
             }
             self.owner.frame = frame;
-        } else if (!self.isOwnerHidden && _panY<-20) {
+        } else {
+            self.state = SFSwipeStateNormal;
+        }
+    } else {
+        if ((self.state==SFSwipeStateNormal || self.state==SFSwipeStateWillHide) && _canSwipeHide) {
+            self.state = SFSwipeStateWillHide;
             CGRect frame = self.orignFrame;
-            frame.origin.y = self.orignFrame.origin.y - (_panY+20)*self.direction;
+            frame.origin.y = self.orignFrame.origin.y - _panY*self.direction;
             if ((frame.origin.y-self.orignFrame.origin.y)*(frame.origin.y-self.finalFrame.origin.y)>0) {
                 frame.origin.y = self.finalFrame.origin.y;
+                self.state = SFSwipeStateHidden;
             }
             self.owner.frame = frame;
         }
@@ -161,48 +191,28 @@
 
 - (void)tableViewDidEndDragging {
 
-    if (self.panY==DefaultPanY || (self.panY<0&&self.panY>-20)) {
-        return;
+    if (self.state==SFSwipeStateWillShow) {
+        
+        self.state = SFSwipeStateNormal;
+        
+        [UIView animateWithDuration:0.25 animations:^{
+            self.owner.frame = self.orignFrame;
+        } completion:^(BOOL finished) {
+            if (finished && self.completion) {
+                self.completion(YES, self.orignFrame);
+            }
+        }];
+    } else if (self.state == SFSwipeStateWillHide) {
+        
+        self.state = SFSwipeStateHidden;
+        
+        [UIView animateWithDuration:0.25 animations:^{
+            self.owner.frame = self.finalFrame;
+        } completion:^(BOOL finished) {
+            if (finished && self.completion) {
+                self.completion(NO, self.finalFrame);
+            }
+        }];
     }
-    if (self.isOwnerHidden) {
-        if (_panY>0) {
-            [UIView animateWithDuration:0.25 animations:^{
-                self.owner.frame = self.orignFrame;
-            } completion:^(BOOL finished) {
-                self.isOwnerHidden = NO;
-                if (finished && self.completion) {
-                    self.completion(YES, self.orignFrame);
-                }
-            }];
-        } else { //这里是必须的，因为可能露出一点
-            [UIView animateWithDuration:0.25 animations:^{
-                self.owner.frame = self.finalFrame;
-            } completion:^(BOOL finished) {
-                if (finished && self.completion) {
-                    self.completion(NO, self.finalFrame);
-                }
-            }];
-        }
-    } else {
-        if (_panY<0) {
-            [UIView animateWithDuration:0.25 animations:^{
-                self.owner.frame = self.finalFrame;
-            } completion:^(BOOL finished) {
-                self.isOwnerHidden = YES;
-                if (finished && self.completion) {
-                    self.completion(NO, self.finalFrame);
-                }
-            }];
-        } else {
-            [UIView animateWithDuration:0.25 animations:^{
-                self.owner.frame = self.orignFrame;
-            } completion:^(BOOL finished) {
-                if (finished && self.completion) {
-                    self.completion(YES, self.orignFrame);
-                }
-            }];
-        }
-    }
-    self.panY = DefaultPanY; //拖拽结束时，需要设置pany=0
 }
 @end

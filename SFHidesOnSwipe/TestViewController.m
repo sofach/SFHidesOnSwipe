@@ -54,16 +54,16 @@
     CGSize navibarSize = self.navigationController.navigationBar.frame.size;
     CGSize tabbarSize = self.tabBarController.tabBar.frame.size;
     
-    [_topView sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, 64, [UIScreen mainScreen].bounds.size.width, 44) toFrame:CGRectMake(0, -44, [UIScreen mainScreen].bounds.size.width, 44) animated:YES completion:^(BOOL isOriginal, CGRect frame) {
+    [_topView sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, 64, [UIScreen mainScreen].bounds.size.width, 44) toFrame:CGRectMake(0, -44, [UIScreen mainScreen].bounds.size.width, 44) beginOffset:100 animated:YES completion:^(BOOL isOriginal, CGRect frame) {
         NSLog(@"top view frame changed:%@", NSStringFromCGRect(frame));
     }];
     
-    [self.navigationController.navigationBar sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, 20, navibarSize.width, navibarSize.height) toFrame:CGRectMake(0, -navibarSize.height-44, navibarSize.width, navibarSize.height) animated:YES completion:^(BOOL isOriginal, CGRect frame) {
+    [self.navigationController.navigationBar sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, 20, navibarSize.width, navibarSize.height) toFrame:CGRectMake(0, -navibarSize.height-44, navibarSize.width, navibarSize.height) beginOffset:100 animated:YES completion:^(BOOL isOriginal, CGRect frame) {
         NSLog(@"navigation bar frame changed:%@", NSStringFromCGRect(frame));
 
     }]; //为了在显示时遮住topview，多上移了44
     
-    [self.tabBarController.tabBar sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, screenSize.height-tabbarSize.height, tabbarSize.width, tabbarSize.height) toFrame:CGRectMake(0, screenSize.height, tabbarSize.width, tabbarSize.height) animated:YES completion:^(BOOL isOriginal, CGRect frame) {
+    [self.tabBarController.tabBar sf_hidesOnSwipeScrollView:scrollView fromFrame:CGRectMake(0, screenSize.height-tabbarSize.height, tabbarSize.width, tabbarSize.height) toFrame:CGRectMake(0, screenSize.height, tabbarSize.width, tabbarSize.height) beginOffset:100 animated:YES completion:^(BOOL isOriginal, CGRect frame) {
         NSLog(@"tab bar frame changed:%@", NSStringFromCGRect(frame));
     }];
 }
@@ -81,7 +81,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 50;
+    return 10;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -95,7 +95,8 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    [self hidesOnScrollView:self.tableView];
+    [self.tableView reloadData];
+//    [self hidesOnScrollView:self.tableView];
 }
 
 @end
