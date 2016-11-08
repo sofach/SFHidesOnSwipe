@@ -71,7 +71,6 @@ typedef enum{
 
 @property (assign, nonatomic) SFSwipeState state;
 
-@property (assign, nonatomic) BOOL isOwnerHidden;
 @property (copy, nonatomic) void(^completion)(BOOL isOriginal, CGRect frame);
 
 //由于一个页面中可能又多个view需要加滑动隐藏效果，所以性能尤为关键，下面几个参数都是为了增加性能
@@ -95,7 +94,7 @@ typedef enum{
     if (_scrollView) {
         [self removeObservers];
     }
-    _isOwnerHidden = NO;
+    _state = SFSwipeStateNormal;
     _scrollView = scrollView;
     _owner = owner;
     _orignFrame = orignFrame;

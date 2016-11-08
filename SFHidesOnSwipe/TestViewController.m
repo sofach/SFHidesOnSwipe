@@ -74,7 +74,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 10;
+    return 50;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -89,6 +89,8 @@
     
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     [self.tableView reloadData];
+    [self hidesOnScrollView:self.tableView];
+
 //    [self hidesOnScrollView:self.tableView];
 }
 
